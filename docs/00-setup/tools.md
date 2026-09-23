@@ -15,7 +15,7 @@ For each tool: what it is, what it actually does, and why it's part of this proj
 **Where it actually runs — kubectl is 100% client-side:**
 
 ```
-[ Me (laptop) ]
+[ Local ]
   |
   |  kubectl apply -f pod.yaml
   v
@@ -82,12 +82,12 @@ Helm v3 (what we use) has no "Tiller" server component living in the cluster —
 
 **What it is:** a tool that runs a real, fully-featured Kubernetes cluster using Docker containers as the cluster's "nodes" — not virtual machines, not cloud infrastructure.
 
-**What it does:** starts one or more containers, each running actual Kubernetes control-plane and node components inside it, and wires them together into a genuine multi-node-capable cluster entirely on a laptop.
+**What it does:** starts one or more containers, each running actual Kubernetes control-plane and node components inside it, and wires them together into a genuine multi-node-capable cluster entirely locally.
 
 **Where it actually runs — nodes are just containers:**
 
 ```
-[ My laptop ]
+[ Local ]
   |
   |  runs
   v
@@ -159,7 +159,7 @@ Same job, opposite trade: kOps trades AWS's operational convenience for the abil
 **Where it actually runs — a completely separate path from kubectl:**
 
 ```
-[ Me ]
+[ Local ]
   |
   |  aws ... --profile personal
   v

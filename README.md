@@ -13,7 +13,7 @@ Progression roughly follows these phases, each building on the last:
 3. **Networking deep-dive** — CNI, kube-proxy modes, eBPF, DNS, ingress, network policy
 4. **Service mesh** — mTLS, traffic shaping, retries/circuit breaking
 5. **GitOps** — Git as the source of truth for cluster state
-6. **Into AWS** — a real, minimal-cost EKS cluster
+6. **Into AWS** — a real, minimal-cost, self-managed cluster (kOps on EC2), chosen over a managed service specifically to see the control plane instead of having it hidden
 7. **Traffic, load balancing, DNS & certificates** — real domain, real TLS
 8. **Storage, query optimization & caching**
 9. **The application** — HTTP, gRPC, and MQTT in one service, calling a public API
@@ -34,7 +34,7 @@ This is a personal-budget project, not a company AWS account, so cost control is
 ```
 docs/        notes and write-ups, one folder per phase
 manifests/   Kubernetes YAML
-infra/       cluster provisioning (eksctl / kOps / Terraform)
+infra/       cluster provisioning (kOps primarily / eksctl / Terraform)
 app/         the application built in the "application" phase
 ```
 
