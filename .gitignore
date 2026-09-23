@@ -1,0 +1,7 @@
+*.tfstate
+*.tfstate.*
+kubeconfig
+*.kubeconfig
+.env
+*.pem
+*.key
