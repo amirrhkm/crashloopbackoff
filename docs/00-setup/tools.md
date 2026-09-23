@@ -14,22 +14,36 @@ For each tool: what it is, what it actually does, and why it's part of this proj
 
 **Where it actually runs — kubectl is 100% client-side:**
 
-```mermaid
-sequenceDiagram
-    participant Me as Me (laptop)
-    participant kubectl
-    participant API as kube-apiserver
-    participant etcd
-    participant Kubelet as kubelet (on a Node)
+```
+[ Me (laptop) ]
+  |
+  |  kubectl apply -f pod.yaml
+  v
+[ kubectl ]
+  |
+  |  HTTPS request (REST/JSON)
+  v
+[ kube-apiserver ]
+  |
+  |  persist desired state
+  v
+[ etcd ]
 
-    Me->>kubectl: kubectl apply -f pod.yaml
-    kubectl->>API: HTTPS request (REST/JSON)
-    API->>etcd: persist desired state
-    API-->>kubectl: 201 Created
-    Note over API,Kubelet: scheduler picks a Node
-    API->>Kubelet: "run this Pod" (via watch)
-    Kubelet->>Kubelet: pull image, start container
-    Kubelet-->>API: report actual status
+  ...scheduler picks a Node, kube-apiserver notifies it...
+
+[ kube-apiserver ]
+  |
+  |  "run this Pod" (via watch)
+  v
+[ kubelet (on a Node) ]
+  |
+  |  pull image, start container
+  v
+[ container running ]
+  |
+  |  report actual status back
+  v
+[ kube-apiserver ]
 ```
 
 `kubectl` never touches a Node directly — it only ever talks to the API server. Everything after that (scheduling, actually starting a container) happens on the cluster side, driven by controllers reacting to the change `kubectl` just wrote into etcd.
@@ -46,10 +60,16 @@ sequenceDiagram
 
 **Where it actually runs — no separate server, unlike old Helm v2:**
 
-```mermaid
-flowchart LR
-    Chart["Chart templates\n+ values.yaml"] --> Helm["helm CLI\n(renders templates, locally)"]
-    Helm -->|plain manifests, same request kubectl would send| API["kube-apiserver"]
+```
+[ Chart templates + values.yaml ]
+  |
+  |  rendered locally by the Helm CLI
+  v
+[ helm CLI ]
+  |
+  |  plain manifests -- same request kubectl would send
+  v
+[ kube-apiserver ]
 ```
 
 Helm v3 (what we use) has no "Tiller" server component living in the cluster — the CLI renders everything on your machine and then talks to the API server exactly the way `kubectl apply` would.
@@ -66,15 +86,18 @@ Helm v3 (what we use) has no "Tiller" server component living in the cluster —
 
 **Where it actually runs — nodes are just containers:**
 
-```mermaid
-flowchart TB
-    subgraph Laptop["My laptop"]
-        subgraph Docker["Docker Engine"]
-            CP["container: lab-control-plane\n(kube-apiserver, etcd, scheduler)"]
-            W["container: lab-worker\n(kubelet, container runtime)"]
-        end
-    end
-    kubectl -.->|talks to, same as any cluster| CP
+```
+[ My laptop ]
+  |
+  |  runs
+  v
+[ Docker Engine ]
+  |
+  |-- container: lab-control-plane   (kube-apiserver, etcd, scheduler)
+  |
+  |-- container: lab-worker          (kubelet, container runtime)
+
+kubectl talks to lab-control-plane exactly like it would talk to any other cluster.
 ```
 
 Nothing here is virtualized beyond Docker itself — "the cluster" is just a couple of specially-configured containers on the same machine `kubectl` is running on.
@@ -101,20 +124,24 @@ Nothing here is virtualized beyond Docker itself — "the cluster" is just a cou
 
 **Where the control plane actually runs — kOps vs EKS, side by side:**
 
-```mermaid
-flowchart LR
-    subgraph kops["kOps cluster (chosen for this project)"]
-        direction TB
-        CP1["EC2 instance: control plane\netcd, kube-apiserver, scheduler\n— I can SSH in and see these processes"]
-        W1["EC2 instance: worker node"]
-        CP1 --- W1
-    end
-    subgraph eks["EKS cluster (eksctl)"]
-        direction TB
-        CP2["AWS-managed control plane\nno SSH, no visible process — a black box"]
-        W2["EC2 or Fargate: worker node"]
-        CP2 --- W2
-    end
+```
+kOps cluster (chosen for this project)
+---------------------------------------
+[ EC2 instance: control plane ]
+  - etcd, kube-apiserver, scheduler
+  - I can SSH in and see these processes
+  |
+  v
+[ EC2 instance: worker node ]
+
+
+EKS cluster (eksctl)
+---------------------------------------
+[ AWS-managed control plane ]
+  - no SSH, no visible process -- a black box
+  |
+  v
+[ EC2 or Fargate: worker node ]
 ```
 
 Same job, opposite trade: kOps trades AWS's operational convenience for the ability to actually see how a control plane works — which is the whole reason it's the primary tool here.
@@ -131,10 +158,16 @@ Same job, opposite trade: kOps trades AWS's operational convenience for the abil
 
 **Where it actually runs — a completely separate path from kubectl:**
 
-```mermaid
-flowchart LR
-    Me[Me] -->|"aws ... --profile personal"| CLI["aws CLI"]
-    CLI -->|signed HTTPS request| AWSAPI["AWS service APIs\n(EC2, S3, IAM, Budgets, ...)"]
+```
+[ Me ]
+  |
+  |  aws ... --profile personal
+  v
+[ aws CLI ]
+  |
+  |  signed HTTPS request
+  v
+[ AWS service APIs (EC2, S3, IAM, Budgets, ...) ]
 ```
 
 No overlap with the kubectl diagram above — this never touches the Kubernetes API at all. kOps happens to call both: it uses the `aws` credentials to create the EC2 instances, then hands off to `kubectl`/the Kubernetes API once the cluster is actually up.
