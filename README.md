@@ -16,9 +16,19 @@ Progression roughly follows these phases, each building on the last:
 6. **Into AWS** — a real, minimal-cost, self-managed cluster (kOps on EC2), chosen over a managed service specifically to see the control plane instead of having it hidden
 7. **Traffic, load balancing, DNS & certificates** — real domain, real TLS
 8. **Storage, query optimization & caching**
-9. **The application** — HTTP, gRPC, and MQTT in one service, calling a public API
+9. **The application** — HTTP, gRPC, and MQTT in one service, calling a public API, containerized and published to a registry (GHCR)
 10. **Observability** — metrics, logs, and traces tied together
 11. **Progressive delivery & resilience** — autoscaling, canary rollouts, load testing
+
+## Key decisions
+
+Updated as decisions are actually made, not just planned:
+
+- **Cloud: AWS**, not Azure — staying put to build depth on fundamentals rather than re-deriving cloud-specific setup elsewhere
+- **Cluster provisioning: kOps**, not EKS — kOps runs the control plane on plain EC2, SSH-able, with etcd/kube-apiserver/kube-scheduler visible as real processes; EKS hides all of that behind a managed service, and seeing the control plane is the actual goal of that phase
+- **Container registry: GHCR**, not Docker Hub — lives next to this repo (same account, free for public images), no separate account to manage
+
+Reasoning for decisions not yet reached (service mesh, GitOps tool, application language) lives in the phase docs once each phase is actually worked through.
 
 ## Cost & safety guardrails
 
